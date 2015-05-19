@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title></title>
+        <link rel='stylesheet' type='text/css' href='' />
+        <meta http-equiv='content-type' content='text/html; charset=utf-8' />
+        <meta name='viewport' content='initial-scale=1.0 maximum-scale=1.0'>
+        <style>
+
+          * {
+            margin: 0;
+            padding: 0;
+          }
+
+          #main {
+            display: flex;
+            flex-direction: row;
+            flex-wrap: wrap;
+          }
+
+          img {
+            height: 400px;
+            margin: 80px auto auto auto;
+            width: 400px;
+            transition: 300ms;
+            cursor: zoom-in;
+          }
+
+          img.focus {
+            cursor: zoom-out;
+          }
+
+          img.blur {
+            transition: filter 1s ease-in-out;
+            -webkit-filter: blur(40px);
+            cursor: e-resize;
+          }
+
+          row {
+            width: 100%;
+          }
+
+          .overlay {
+            height: 0;
+            width: 0;
+            top: 0;
+            left: 0;
+            position: absolute;
+            opacity: 0;
+            transition: opacity 300ms ease-in-out;
+            overflow: hidden;
+            text-align: left;
+          }
+
+          .overlay.active {
+            width: 100%;
+            height: 100%;
+            background-color: #ececec;
+            opacity: 1;
+          }
+
+        </style>
+    </head>
+    <body>
+      <div id="main"></div>
+
+        <script src="js/FeedView.js"></script>
+        <script src="js/LightBoxView.js"></script>
+        <script src="js/Store.js"></script>
+        <script src="js/app.js"></script>
+
+        <script>
+
+        document.onreadystatechange = function () {
+          if (document.readyState == "interactive") {
+            app.init();
+          }
+        }
+
+        </script>
+
+        </body>
+        </html>
