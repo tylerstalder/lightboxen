@@ -5,36 +5,3 @@ var CONFIG = {
 
   popularAccounts: bootstrap
 };
-
-  /*
-  popularAccounts: [
-    {name: "joshualott", id: 422980297},
-    {name: "adamsenatori", id: 152721},
-    {name: "lavicvic", id: 1073351},
-    {name: "alexprager", id: 11469979},
-    {name: "bkstreetart", id: 344623343},
-    {name: "hirozzzz", id: 4803655},
-    {name: "garethpon", id: 12900868},
-    {name: "dguttenfelder", id: 29440194},
-    {name: "thiswildidea", id: 9868480},
-    {name: "macenzo", id: 146992},
-    {name: "andrewknapp", id: 4717649},
-    {name: "inezvinoodh", id: 9545168},
-    {name: "janske", id: 24078},
-    {name: "samhorine", id: 765701},
-    {name: "othellonine", id: 6156112},
-    {name: "kirstenalana", id: 116480},
-    {name: "reallykindofamazing", id: 53230251},
-    {name: "jeffonline", id: 20638001},
-    {name: "palchenkov", id: 13819},
-    {name: "heysp", id: 1032935},
-    {name: "mikekus", id: 396},
-    {name: "danrubin", id: 72},
-    {name: "chrysti", id: 7502},
-    {name: "skwii", id: 307146},
-    {name: "brahmino", id: 1918184}
-  ]
- */
-
-
-

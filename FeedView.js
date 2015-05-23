@@ -6,17 +6,12 @@ var FeedView = function(options) {
   this.collection = options.collection;
 
   this.collection.listenTo('add', function(e) {
-    console.log('add event triggered render');
     _this.render();
   });
-
-  //this.collection.listenTo('add', this.render.bind(this));
 
   this.lightbox = new LightboxView();
 
   this.mount();
-
-  //this.render();
 };
 
 FeedView.prototype.mount = function() {

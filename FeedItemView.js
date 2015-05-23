@@ -11,8 +11,6 @@ var FeedItemView = function(options) {
     this.el = options.el;
   }
 
-  //this.render();
-
   this.mount();
 };
 
@@ -57,19 +55,6 @@ FeedItemView.prototype.render = function() {
 };
 
 FeedItemView.prototype.update = function() {
-
-  /*
-  if (this.model.photos.get(0)) {
-    var cover = this.model.photos.get(0);
-    var coverPhoto = document.createElement('img');
-    coverPhoto.src = cover.url;
-    coverPhoto.classList.add('zoomable');
-    coverPhoto.classList.add('prerender');
-
-    this.inner.appendChild(coverPhoto);
-  }
- */
-
   if (this.isRendered) {
     this.el.firstChild.firstChild.classList.remove('prerender');
   }
