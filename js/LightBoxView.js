@@ -1,7 +1,3 @@
-// show event
-// dismiss event
-// rewind partial transitions
-
 var Image = function(options) {
   this.el = options.el;
 
@@ -18,45 +14,55 @@ var LightboxView = function(options) {
   this.fromHeight = options.fromHeight || 400;
   this.margin = options.margin || 40;
 
-  this.isActive = false;
-  this.activeSet = [];
-  this.activeIndex = 0;
-  this.events = {};
-};
-
-LightboxView.prototype.advance = function() {
-  this.activeIndex = this.activeIndex + 1;
-
-  var leftOffset = ((this.fromHeight * this.scale) / 4);
-
-  var previous = -(document.documentElement.clientWidth / 2) + ((this.fromHeight * this.scale) / 2) - leftOffset;
-  var centerY = document.documentElement.clientHeight > (this.maxHeight + (2 * this.margin)) ? window.pageYOffset + (document.documentElement.clientHeight / 2) - (this.maxHeight / 2) : window.pageYOffset + this.margin;
-
-  console.log('check', centerY, this.image.initialY);
-
-  this.leftPosition = { x: previous, y: this.image.initialY };
-  this.moveTo(this.image, this.leftPosition, this.scale);
-
-  this.image.el.classList.add('blur');
-  this.image.el.classList.remove('focus');
-
-  this.next.el.classList.remove('blur');
-  this.next.el.classList.add('focus');
-
-  this.moveTo(this.next, this.centerPosition, this.scale);
-
-  this.image = this.next;
-};
-
-LightboxView.prototype.mount = function() {
-  this.isActive = true;
-
   this.container = document.getElementById('main');
+  this.model = null;
+  this.events = {};
+  this.nodes = {};
 };
 
-LightboxView.prototype.bindEvents = function() {
-  this.events.dismiss = this.dismiss.bind(this);
-  this.container.addEventListener('click', this.events.dismiss, false);
+LightboxView.prototype.forward = function(e) {
+  if (e) e.stopPropagation();
+
+  var photo = this.model.next();
+  this.image.el.src = photo.url;
+  this.nodes.caption.innerHTML = '<span class="caption-text">' + this.formatCaption(photo.caption, photo.link) + '</span>';
+};
+
+LightboxView.prototype.backward = function(e) {
+  if (e) e.stopPropagation();
+
+  var photo = this.model.previous();
+  this.image.el.src = photo.url;
+  this.nodes.caption.innerHTML = '<span class="caption-text">' + this.formatCaption(photo.caption, photo.link) + '</span>';
+};
+
+LightboxView.prototype._keyboardHandler = function(e) {
+    var LEFT_ARROW = 37;
+    var RIGHT_ARROW = 39;
+    var ESCAPE = 27;
+
+    if (e.keyCode === RIGHT_ARROW) {
+      e.preventDefault();
+      this.forward();
+    }
+
+    if (e.keyCode === LEFT_ARROW) {
+      e.preventDefault();
+      this.backward();
+    }
+
+    if (e.keyCode === ESCAPE) {
+      this.dismiss();
+    }
+};
+
+LightboxView.prototype.formatCaption = function(input, link) {
+  if (!input) return '';
+  if (input && input.length > 140) {
+    return input.substr(0, 140).split(' ').slice(0, -1).join(' ') + " <a href='" + link  + "' target='_blank'>...</a>";
+  } else {
+    return input;
+  }
 };
 
 LightboxView.prototype.moveTo = function(image, coords, scale) {
@@ -64,28 +70,49 @@ LightboxView.prototype.moveTo = function(image, coords, scale) {
   var translateX = coords.x - image.initialX;
   var translateY = coords.y - image.initialY;
 
-  console.log(coords.x, image.initialX);
-  console.log(translateX, translateY, scale);
-
-  image.el.style.transform = 'translate(' + translateX + 'px, ' + translateY + 'px) scale(' + scale + ', ' + scale + ') translateZ(0)';
+  image.el.parentNode.style.transform = 'translate(' + translateX + 'px, ' + translateY + 'px) scale(' + scale + ', ' + scale + ') translateZ(0)';
+  image.el.parentNode.style['-webkit-transform'] = 'translate(' + translateX + 'px, ' + translateY + 'px) scale(' + scale + ', ' + scale + ') translateZ(0)';
 };
 
-LightboxView.prototype.show = function(targetImage, photoSet) {
+LightboxView.prototype.show = function(element, photo, model) {
 
-  if (!this.isActive) this.mount();
+  this.model = model;
 
-  this.collection = photoSet;
+  var nodes = this.nodes;
 
   var overlay = document.createElement('div');
   overlay.classList.add('overlay');
 
+  var captionContainer = document.createElement('div');
+  captionContainer.classList.add('caption');
+  var caption = document.createElement('div');
+  var navigation = document.createElement('span');
+  navigation.classList.add('nav');
+
+  caption.innerHTML = '<span class="caption-text">' + this.formatCaption(photo.caption, photo.link) + '</span>';
+
+  nodes.caption = caption;
+
+  nodes.forward = document.createElement('a')
+  nodes.forward.textContent = ">";
+
+  nodes.backward = document.createElement('a');
+  nodes.backward.textContent = "<";
+
+  navigation.appendChild(nodes.backward);
+  navigation.appendChild(nodes.forward);
+
+  captionContainer.appendChild(caption);
+  captionContainer.appendChild(navigation);
+
   this.image = new Image({
-    el: targetImage
+    el: element
   });
 
-  this.overlayEl = this.image.el.parentNode.parentNode.insertBefore(overlay, this.image.el.parentNode);
+  this.overlayEl = document.body.insertBefore(overlay, this.container);
+  this.captionEl = document.body.insertBefore(captionContainer, this.container);
 
-  this.bindEvents();
+  this.bindEvents(nodes);
 
   var maxHeight = this.maxHeight;
   var fromHeight = this.fromHeight;
@@ -98,70 +125,66 @@ LightboxView.prototype.show = function(targetImage, photoSet) {
 
   this.scale = scaleRatio;
 
-  var model = this.collection.get(this.activeIndex+1);
-
-  var el = document.createElement('img');
-  el.classList.add('blur');
-  el.src = model.url;
-
-  var nextImage = this.overlayEl.appendChild(el);
-
-  this.next = new Image({
-    el: nextImage
-  });
-
-  var _this = this;
-
-  this.next.el.addEventListener('click', function(e) {
-
-    _this.advance();
-    e.stopPropagation();
-
-  }, false);
-
   this.image.initialX = this.image.el.offsetLeft - (this.fromHeight / 2) * (this.scale - 1);
   this.image.initialY = this.image.el.offsetTop - (this.fromHeight / 2) * (this.scale - 1);
 
-  var centerX = (document.documentElement.clientWidth / 2) - (this.maxHeight / 2);
+  var centerX = (document.documentElement.clientWidth / 2) - (this.maxHeight / 2) + this.margin;
   var centerY = document.documentElement.clientHeight > (this.maxHeight + (2 * this.margin)) ? window.pageYOffset + (document.documentElement.clientHeight / 2) - (this.maxHeight / 2) : window.pageYOffset + this.margin;
 
   this.centerPosition = { x: centerX, y: centerY };
-  this.moveTo(this.image, this.centerPosition, scaleRatio);
+  this.image.el.classList.add('focus');
+  this.moveTo(this.image, this.centerPosition, this.scale);
   this.image.initialY = centerY;
 
+  this.captionEl.style.top = centerY + 'px';
+  this.captionEl.style.left = centerX + 'px';
+
   this.overlayEl.classList.add('active');
-
-  var next = document.documentElement.clientWidth + 260;
-
-  this.next.initialX = (document.documentElement.clientWidth / 2) - ((this.fromHeight * this.scale) / 2);
-  this.next.initialY = this.next.el.offsetTop - (this.fromHeight / 2) * (this.scale - 1);
-
-  var rightPosition = { x: next, y: centerY };
-
-  this.moveTo(this.next, rightPosition, scaleRatio);
+  this.captionEl.classList.add('active');
 };
 
-LightboxView.prototype.onMount = function() {
+LightboxView.prototype.bindEvents = function(nodes) {
+  this.events.dismiss = this.dismiss.bind(this);
+  this.events.keypressHandler = this._keyboardHandler.bind(this);
+  this.events.forward = this.forward.bind(this);
+  this.events.backward = this.backward.bind(this);
 
+  this.captionEl.addEventListener('click', this.events.dismiss, false);
+  this.overlayEl.addEventListener('click', this.events.dismiss, false);
+
+  document.addEventListener('scroll', this.events.dismiss, false);
+  document.addEventListener('keydown', this.events.keypressHandler, false);
+
+  nodes.forward.addEventListener('click', this.events.forward, false);
+  nodes.backward.addEventListener('click', this.events.backward, false);
 };
 
-LightboxView.prototype.onUnmount = function() {
+LightboxView.prototype.unbindEvents = function(nodes) {
+  this.container.removeEventListener('click', this.events.dismiss, false);
+  this.overlayEl.removeEventListener('click', this.events.dismiss, false);
 
+  document.removeEventListener('scroll', this.events.dismiss, false);
+  document.removeEventListener('keydown', this.events.keypressHandler, false);
+
+  nodes.forward.removeEventListener('click', this.events.forward, false);
+  nodes.backward.removeEventListener('click', this.events.backward, false);
 };
 
 LightboxView.prototype.dismiss = function(e) {
 
-  this.isActive = false;
-  this.container.removeEventListener('click', this.events.dismiss, false);
+  this.unbindEvents(this.nodes);
 
-  this.image.el.style.transform = '';
+  this.image.el.parentNode.style.transform = '';
+  this.image.el.parentNode.style['-webkit-transform'] = '';
   this.image.el.classList.remove('focus');
 
   var _this = this;
+
   this.overlayEl.addEventListener('transitionend', function(e) {
-    console.log('transition done');
-    _this.container.removeChild(_this.overlayEl);
+    document.body.removeChild(_this.overlayEl);
+    document.body.removeChild(_this.captionEl);
   }, true);
 
   this.overlayEl.classList.remove('active');
+  this.captionEl.classList.remove('active');
 };
