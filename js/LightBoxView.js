@@ -1,13 +1,3 @@
-var Image = function(options) {
-  this.el = options.el;
-
-  this.x = 0;
-  this.y = 0;
-
-  this.initialX = 0;
-  this.initialY = 0;
-};
-
 var LightboxView = function(options) {
   var options = options || {};
   this.maxHeight = options.maxHeight || 640;
@@ -16,6 +6,7 @@ var LightboxView = function(options) {
 
   this.container = document.getElementById('main');
   this.model = null;
+  this.el = null;
   this.events = {};
   this.nodes = {};
 };
@@ -24,7 +15,7 @@ LightboxView.prototype.forward = function(e) {
   if (e) e.stopPropagation();
 
   var photo = this.model.next();
-  this.image.el.src = photo.url;
+  this.el.src = photo.url;
   this.nodes.caption.innerHTML = '<span class="caption-text">' + this.formatCaption(photo.caption, photo.link) + '</span>';
 };
 
@@ -32,7 +23,7 @@ LightboxView.prototype.backward = function(e) {
   if (e) e.stopPropagation();
 
   var photo = this.model.previous();
-  this.image.el.src = photo.url;
+  this.el.src = photo.url;
   this.nodes.caption.innerHTML = '<span class="caption-text">' + this.formatCaption(photo.caption, photo.link) + '</span>';
 };
 
@@ -65,18 +56,20 @@ LightboxView.prototype.formatCaption = function(input, link) {
   }
 };
 
-LightboxView.prototype.moveTo = function(image, coords, scale) {
+LightboxView.prototype.moveTo = function(image, transforms) {
 
-  var translateX = coords.x - image.initialX;
-  var translateY = coords.y - image.initialY;
+  var translateX = transforms.end.x - transforms.start.x;
+  var translateY = transforms.end.y - transforms.start.y;
+  var scale = transforms.scale;
 
-  image.el.parentNode.style.transform = 'translate(' + translateX + 'px, ' + translateY + 'px) scale(' + scale + ', ' + scale + ') translateZ(0)';
-  image.el.parentNode.style['-webkit-transform'] = 'translate(' + translateX + 'px, ' + translateY + 'px) scale(' + scale + ', ' + scale + ') translateZ(0)';
+  image.parentNode.style.transform = 'translate(' + translateX + 'px, ' + translateY + 'px) scale(' + scale + ', ' + scale + ') translateZ(0)';
+  image.parentNode.style['-webkit-transform'] = 'translate(' + translateX + 'px, ' + translateY + 'px) scale(' + scale + ', ' + scale + ') translateZ(0)';
 };
 
 LightboxView.prototype.show = function(element, photo, model) {
 
   this.model = model;
+  this.el = element;
 
   var nodes = this.nodes;
 
@@ -105,42 +98,43 @@ LightboxView.prototype.show = function(element, photo, model) {
   captionContainer.appendChild(caption);
   captionContainer.appendChild(navigation);
 
-  this.image = new Image({
-    el: element
-  });
-
   this.overlayEl = document.body.insertBefore(overlay, this.container);
   this.captionEl = document.body.insertBefore(captionContainer, this.container);
 
   this.bindEvents(nodes);
 
+  element.classList.add('focus');
+
+  var transforms = this.calculateTransforms(element);
+  this.moveTo(element, transforms);
+
+  this.captionEl.style.top = transforms.end.y + 'px';
+  this.captionEl.style.left = transforms.end.x + 'px';
+
+  this.overlayEl.classList.add('active');
+  this.captionEl.classList.add('active');
+};
+
+
+LightboxView.prototype.calculateTransforms = function(el) {
   var maxHeight = this.maxHeight;
   var fromHeight = this.fromHeight;
   var margin = this.margin;
 
   var toHeight = document.documentElement.clientHeight - (margin * 2);
-  this.toHeight = toHeight;
-
   var scaleRatio = (toHeight >= maxHeight) ? (maxHeight / fromHeight) : (toHeight / fromHeight);
 
-  this.scale = scaleRatio;
+  var initialX = el.offsetLeft - (fromHeight / 2) * (scaleRatio - 1);
+  var initialY = el.offsetTop - (fromHeight / 2) * (scaleRatio - 1);
 
-  this.image.initialX = this.image.el.offsetLeft - (this.fromHeight / 2) * (this.scale - 1);
-  this.image.initialY = this.image.el.offsetTop - (this.fromHeight / 2) * (this.scale - 1);
+  var centerX = (document.documentElement.clientWidth / 2) - (maxHeight / 2) + margin;
+  var centerY = document.documentElement.clientHeight > (maxHeight + (2 * margin)) ? window.pageYOffset + (document.documentElement.clientHeight / 2) - (maxHeight / 2) : window.pageYOffset + margin;
 
-  var centerX = (document.documentElement.clientWidth / 2) - (this.maxHeight / 2) + this.margin;
-  var centerY = document.documentElement.clientHeight > (this.maxHeight + (2 * this.margin)) ? window.pageYOffset + (document.documentElement.clientHeight / 2) - (this.maxHeight / 2) : window.pageYOffset + this.margin;
-
-  this.centerPosition = { x: centerX, y: centerY };
-  this.image.el.classList.add('focus');
-  this.moveTo(this.image, this.centerPosition, this.scale);
-  this.image.initialY = centerY;
-
-  this.captionEl.style.top = centerY + 'px';
-  this.captionEl.style.left = centerX + 'px';
-
-  this.overlayEl.classList.add('active');
-  this.captionEl.classList.add('active');
+  return {
+    start: { x: initialX, y: initialY },
+    end: { x: centerX, y: centerY },
+    scale: scaleRatio
+  };
 };
 
 LightboxView.prototype.bindEvents = function(nodes) {
@@ -174,9 +168,9 @@ LightboxView.prototype.dismiss = function(e) {
 
   this.unbindEvents(this.nodes);
 
-  this.image.el.parentNode.style.transform = '';
-  this.image.el.parentNode.style['-webkit-transform'] = '';
-  this.image.el.classList.remove('focus');
+  this.el.parentNode.style.transform = '';
+  this.el.parentNode.style['-webkit-transform'] = '';
+  this.el.classList.remove('focus');
 
   var _this = this;
 
