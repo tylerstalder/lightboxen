@@ -1,5 +1,12 @@
 Lightboxen
 
+Features
+
+* Displays photos from 20 top Instagram users
+* Lightbox any user's feed
+* Show captions on hover
+* Navigate through feed using arrow keys or ui controls 
+
 Spec
 
 * The ability to access to a public API and successfully retrieve data from it,
