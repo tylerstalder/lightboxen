@@ -1,11 +1,10 @@
 var FeedItemView = function(options) {
   var options = options || {};
-  var _this = this;
 
   this.model = options.model;
   this.isRendered = false;
   this.isLoaded = false;
-  this.handleClick = options.onClick;
+  this.clickCallback = options.onClick;
 
   if (options.el) {
     this.isRendered = true;
@@ -14,25 +13,28 @@ var FeedItemView = function(options) {
 
   //this.render();
 
-  this.model.photos.listenTo('sync', function(e) {
-    _this.isLoaded = true;
-    if (_this.isRendered) {
-      _this.update();
-    }
-  });
-
   this.mount();
 };
 
 FeedItemView.prototype.mount = function() {
-  this.model.fetch();
+  this.model.photos.listenTo('sync', this.handleSync.bind(this));
+  this.el.addEventListener('click', this.handleClick.bind(this));
 
-  var _this = this;
-  this.el.addEventListener('click', function(e) {
-    if (_this.isRendered && _this.isLoaded) {
-      _this.handleClick(e.target, _this.model.photos.get(_this.model.coverIndex), _this.model);
-    }
-  }, false);
+  this.model.fetch();
+};
+
+FeedItemView.prototype.handleClick = function(e) {
+  if (this.isRendered && this.isLoaded) {
+    this.clickCallback(e.target, this.model);
+  }
+};
+
+FeedItemView.prototype.handleSync = function(e) {
+  this.isLoaded = true;
+
+  if (this.isRendered) {
+    this.update();
+  }
 };
 
 FeedItemView.prototype.render = function() {

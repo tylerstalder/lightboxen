@@ -14,13 +14,17 @@ Model.prototype.fetch = function(options) {
   this.photos.fetch(options);
 };
 
+Model.prototype.current = function() {
+  return this.photos.get(this.coverIndex);
+};
+
 Model.prototype.next = function() {
-  this.coverIndex = this.coverIndex < this.photos._models.length - 1 ? this.coverIndex + 1 : 0;
+  this.coverIndex = (this.coverIndex < this.photos._models.length - 1) ? this.coverIndex + 1 : 0;
   return this.photos.get(this.coverIndex);
 };
 
 Model.prototype.previous = function() {
-  this.coverIndex = this.coverIndex === 0 ? this.photos._models.length - 1 : this.coverIndex - 1;
+  this.coverIndex = (this.coverIndex === 0) ? this.photos._models.length - 1 : this.coverIndex - 1;
   return this.photos.get(this.coverIndex);
 };
 
