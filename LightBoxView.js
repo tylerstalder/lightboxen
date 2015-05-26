@@ -30,6 +30,8 @@ LightboxView.prototype.show = function(element, model) {
 
   this.captionEl.style.top = transforms.end.y + 'px';
   this.captionEl.style.left = transforms.end.x + 'px';
+  this.captionEl.style.height = transforms.end.height + 'px';
+  this.captionEl.style.width = transforms.end.height + 'px';
 
   this.overlayEl.classList.add('active');
   this.captionEl.classList.add('active');
@@ -172,7 +174,7 @@ LightboxView.prototype._calculateTransforms = function(el) {
 
   return {
     start: { x: initialX, y: initialY },
-    end: { x: centerX, y: centerY },
+    end: { x: centerX, y: centerY, height: toHeight },
     scale: scaleRatio
   };
 };
