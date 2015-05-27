@@ -169,8 +169,11 @@ LightboxView.prototype._calculateTransforms = function(el) {
   var initialX = el.offsetLeft - (fromHeight / 2) * (scaleRatio - 1);
   var initialY = el.offsetTop - (fromHeight / 2) * (scaleRatio - 1);
 
+  var isFullRes = document.documentElement.clientHeight > (maxHeight + (2 * margin));
+
   var centerX = (document.documentElement.clientWidth / 2) - (maxHeight / 2);
-  var centerY = document.documentElement.clientHeight > (maxHeight + (2 * margin)) ? window.pageYOffset + (document.documentElement.clientHeight / 2) - (maxHeight / 2) : window.pageYOffset + margin;
+  if (!isFullRes) centerX += margin;
+  var centerY = (isFullRes) ? window.pageYOffset + (document.documentElement.clientHeight / 2) - (maxHeight / 2) : window.pageYOffset + margin;
 
   return {
     start: { x: initialX, y: initialY },
